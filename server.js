@@ -1,80 +1,61 @@
 const express = require('express');
-const { fileURLToPath } = require('url');
+const mongoose = require('mongoose');
+const budgetItemsModel = require('./models/budget_schema');
+const cors = require('cors');
 const app = express();
 const port = 3000;
-
-app.use('/' , express.static('public'));
-//below is my json file being required
-const budget = require('./dee.json')
+const url = 'mongodb://localhost:27017/personalBudget';
+app.use(cors());
 
 
 
-// I commented out the original budget data to see if json is working
-/*{
-  myBudget:  [
-{
-title: 'Eat out',
-budget: 30
+app.use('/', express.static('public'));
+app.use(express.json());
 
-},
-{
-    title: 'Rent',
-    budget: 350
-    
-    },
-    {
-        title: 'Groceries',
-        budget: 90
-        
-        },
-        {
-            title: 'Gas',
-            budget: 45
-            
-            },
-    {
-         title: 'Insurance',
-         budget: 25
-                
-     },
-    {
-        title: 'Health Care',
-        budget: 70
-                    
-    },
-    {
-        title: 'Electricity',
-        budget: 40
-                        
-     },
-     {
-        title: 'Water utilities',
-        budget: 25
-        
-    },
-  
-    
-]};*/
-
-
-
-
-
-
-
-
-app.get('/hello', (req,res) =>{
-
+app.get('/hello', (req, res) => {
     res.send('Hello World!');
-
 });
 
-app.get('/Budget', (req,res) => {
-  res.json(budget);
-     
+app.get('/items', (req, res) => {
+    mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
+        .then(() => {
+            budgetItemsModel.find({})
+                .then((data) => {
+                    res.json(data);
+                    mongoose.connection.close();
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+        })
+        .catch((error) => {
+            console.log(error);
+        });
+});
+
+app.post('/additem', (req, res) => {
+    mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
+        .then(() => {
+            var budgetItem = new budgetItemsModel({
+                title: req.body.title,
+                value: req.body.value,
+                color: req.body.color
+            });
+
+            budgetItemsModel.insertMany(budgetItem)
+                .then((data) => {
+                    res.json(data);
+                    mongoose.connection.close();
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+        })
+        .catch((error) => {
+            console.log(error);
+        });
 });
 
 app.listen(port, () => {
-
-    console.log(`Example app listening at http://localhost:${port}`)
+    console.log(`Example app listening at http://localhost:${port}`);
 });
